@@ -17,8 +17,25 @@ string Sale_End;
 integer lchan;
 integer lhandle;
 list Investors;
+list admin_btns =["Set Active","Configure","Reset","Sales Dates","Discounts","Profit Split"];
+list customer_btns = ["Gift","Credit"];
 
+Dialog(key av,list btns)
+{
+ llListenRemove(lhandle);
+ lhandle = llListen(lchan,"",av,"");
+ llDialog(av,"\nSelect an option:",btns,lchan);
+ 
+ Timer();   
+}
 
+Timer()
+{
+ 
+ llSetTimerEvent(0.0);
+  llSetTimerEvent(120.0);
+    
+}
 
 
 default
@@ -33,8 +50,26 @@ default
       lchan = ((integer)("0x"+llGetSubString((string)Vendor_Key,-8,-1)) - 723) | 0x8000000;  
     }
 
-    touch_start(integer total_number)
+    touch_end(integer total_number)
     {
+       key Toucher = llDetectedKey(0); 
+       
+       
+       if(Toucher == Owner)
+       Dialog(Toucher,admin_btns);
+       
+       else
+       Dialog(Toucher,customer_btns);
        
     }
+    
+  timer()
+  {
+     
+     llSetTimerEvent(0.0);
+     llListenRemove(lhandle);
+      
+  }  
+    
 }
+
