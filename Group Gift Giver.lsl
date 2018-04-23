@@ -5,6 +5,11 @@ key group_key;
 key Owner;
 list Region;
 list iItems;
+integer lchan;
+integer bchan;
+integer lhandle;
+integer bhandle;
+string thisScript;
 
 
 
@@ -37,6 +42,14 @@ string GetLocation()
     return (globe + "/" + llEscapeURL(region) +"/" + posx + "/" +posy  + "/" + posz);
 }
 
+integer UniqueChan(integer offset)
+{
+
+   return ((integer)("0x"+llGetSubString((string)llGetKey(),-8,-1)) - offset) | 0x8000000; 
+   
+
+}
+
 
 default
 {
@@ -53,6 +66,12 @@ default
     {
     
     Owner = llGetOwner();
+    lchan = UniqueChan(7653);
+    bchan = UniqueChan(226);
+    
+    thisScript = llGetScriptName();
+    
+    
     Region = llGetParcelDetails(llGetPos(), [PARCEL_DETAILS_NAME]);
     
     group_set = Check_ObjectGroup();
@@ -71,6 +90,19 @@ default
        key Toucher = llDetectedKey(0); 
        group_set = Check_ObjectGroup();
        
+       
+       if(Toucher == Owner)
+       {
+           
+          llListenRemove(lhandle);
+          lhandle = llListen(lchan, "",Owner,""); 
+          llDialog(Owner,"\nSelect to add someone to the ban list, or test delivery of the items in this giver, or set number of gifts per customer, or set giver on.off.",["BAN","Test","Gift Limit","On/Off"],lchan);
+          
+           
+       }
+       
+       else
+       {
        if(group_set)
        {
         
@@ -84,8 +116,8 @@ default
         // llInstantMessage(Toucher, "Sorry you are banned from this store, you may not receive gifts from here.");
          
          // else
-         
-         string thisScript = llGetScriptName();
+         //{
+        
         list inventoryItems;
         integer inventoryNumber = llGetInventoryNumber(INVENTORY_ALL);
  
@@ -102,7 +134,7 @@ default
                 }
                 else
                 {
-                    llInstantMessage(Owner, "Unable to copy the item named '" + itemName + "'. Your group gift giver is here: " + (string)Region +  " - " + GetLocation() +".");
+                    llInstantMessage(Owner, "The item named '" + itemName+ "' is not copyable. Your group gift giver is here: " + (string)Region +  " - " + GetLocation() +".");
                 }
             }
         }
@@ -116,7 +148,15 @@ default
         }
         else
         {
+           
+           // send data to database date uuid name gift name region
+           
+           
+           
             llGiveInventoryList(llDetectedKey(0), llGetObjectName(), inventoryItems);    // 3.0 seconds delay
+
+
+
         }  
              
              
@@ -132,9 +172,53 @@ default
          
          llInstantMessage(llGetOwner(),"WARNING: You have not set a group on your giver yet so items can not be distributed to your customers! Edit the prim and in the general tab select the spanner icon, then select a group to set the active group. Your group gift giver is here: " + (string)Region +  " - " + GetLocation() +".");   
             
-        } 
-    }
+        } // no group set
+        
+        // } if not on ban list
+        
+       } // else if toucher is not owner 
+         
+    } // end of touch_end
     
+    
+  
+  
+    listen(integer chan, string name, key id, string msg)
+{
+    
+    if(chan == lchan)
+    {
+ 
+        if(msg == "BAN")
+        {
+            
+        }
+        
+        
+        else if (msg == "TEST")
+        {
+            
+        }   
+        
+        else if (msg == "GIFT LIMITS")
+        {
+            
+        }
+        
+        else if (msg == "ON/OFF")
+        {
+        
+        
+        }
+        
+     }
+}
+    
+    
+ 
+// Needs fixing. Perhaps at end of loop, run through list and check if items are actually in inventory.
+
+ 
     changed(integer change)
     {
         
@@ -146,14 +230,44 @@ default
           {
             
             string item = llGetInventoryName(INVENTORY_ALL,x);
-
-              
+           
+           if(item != thisScript)
+           if(!~llListFindList(iItems, [item]))
+             {
+                 
+                 if (llGetInventoryPermMask(item, MASK_OWNER) & PERM_COPY)
+                {
+                    iItems += item;
+                }
+                else
+                {
+                    llInstantMessage(Owner, "The item named '" + item + "' is not copyable.");
+                }
+                 
+                 
+              }
+             
+             else
+             {
+               
+               integer idx = llListFindList(iItems, [item]);
+               
+                                
+                 
+              }              
               
           }
             
             
             
         }
+        
+    }
+    
+    
+    timer()
+    {
+        
         
     }
 
