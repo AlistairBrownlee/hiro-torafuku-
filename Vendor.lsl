@@ -22,7 +22,8 @@ integer lhandle;
 list Investors;
 key requestURL;
 key checkReg;
-list admin_btns =["Set Active","Configure","Reset","Sales Dates","Discounts","Profit Split"];
+key checkBan;
+list admin_btns =["Set Active","Configure","Reset","Sales Dates","Discounts","Profit Split","Ban"];
 list customer_btns = ["Gift","Credit"];
 integer Active = TRUE;
 
@@ -241,7 +242,18 @@ default
     
     money(key id, integer amount)
     {
+        if(Active)
+        {
+          
+          //check banlist checkBan = llHTTPRequest();
+            
+        }
         
+        else
+        {
+            
+            
+        }
      
      
      }
@@ -271,4 +283,3 @@ default
   }  
     
 }
-
