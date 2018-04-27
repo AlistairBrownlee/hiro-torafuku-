@@ -1,3 +1,4 @@
+integer Perms;
 key Owner;
 key Vendor_Key;
 key Customer_Key;
@@ -23,6 +24,8 @@ list Investors;
 key requestURL;
 key checkReg;
 key checkBan;
+key callServer;
+key returnBan;
 list admin_btns =["Set Active","Configure","Reset","Sales Dates","Discounts","Profit Split","Ban"];
 list customer_btns = ["Gift","Credit"];
 integer Active = TRUE;
@@ -99,15 +102,43 @@ default
       Vendor_Key = llGetKey();
       lchan = ((integer)("0x"+llGetSubString((string)Vendor_Key,-8,-1)) - 723) | 0x8000000; 
 
-        
-        init(); 
+        //llRequestPermissions(Owner,PERMISSION_DEBIT);
+        init();
 
  
     }
+    
+    
+    run_time_permissions(integer perm)
+    {
+      
+      if(perm & PERMISSION_DEBIT)
+      {
+          
+          Perms = TRUE;
+          init();
+          
+          
+          
+        }
+        
+        else
+        {
+        llInstantMessage(Owner,"This vendor can not be used without granting debit permissions.");
+        Perms = FALSE;
+        
+        }
+        
+        
+    }
+    
 
     touch_end(integer total_number)
     {
-       key Toucher = llDetectedKey(0); 
+         key Toucher = llDetectedKey(0);  
+      if(Perms)
+      {  
+     
        
        
        if(Toucher == Owner)
@@ -115,6 +146,17 @@ default
        
        else
        Dialog(Toucher,customer_btns);
+       }
+       
+       else
+       {
+          
+          if(Toucher == Owner)
+          {
+              llRequestPermissions(Owner,PERMISSION_DEBIT);
+          }
+           
+        }
        
     }
     
@@ -135,6 +177,43 @@ default
             llOwnerSay("There was a problem, and an URL was not assigned: " + body);
             requestURL = NULL_KEY;
         }
+        
+        else if(id == checkBan)
+        {
+           
+           if(body == "Yes")
+           {
+               
+              llInstantMessage(Customer_Key,"You are banned from this store, you can not buy items from this vendor.");
+              returnBan = llTransferLindenDollars(Customer_Key,Paid_Amount);
+ 
+               
+            }
+               
+               
+           else if(body == "No")
+            {
+                   
+               integer itemcheck = llGetInventoryType(Product); 
+               
+               if(itemcheck == INVENTORY_NONE)
+               {
+                   callServer = llHTTPRequest("serverurl.com",[HTTP_METHOD,"POST",HTTP_MIMETYPE,"application/x-www-form-urlencoded"],
+             "Owner="+(string)llGetOwner()+
+             "&Product="+(string)Product);
+                   
+                }
+               
+               else
+                llGiveInventory(Customer_Key,Product);
+                
+                
+           
+                   
+            }
+              
+            
+         }
     }
     
     http_response(key id, integer status, list metadata, string body)
@@ -272,7 +351,28 @@ default
         
     } 
     
-    
+    transaction_result(key id, integer success, string data)
+    {
+        
+        if(id == returnBan)
+            {
+                
+              if(!success)
+              {
+                
+                llInstantMessage(Customer_Key,"There was an error returning your money. Please contact "+"secondlife:///app/agent/" + (string)Owner + "/about"+" to get your money back.");
+                  
+                 llInstantMessage(Owner,"There was an error returning L$"+(string)Paid_Amount+" to "+"secondlife:///app/agent/" + (string)Customer_Key + "/about"+". Please return the money to them manually.\n]n Reason for error: " + data +".\nYou can view what this reason means here: http://wiki.secondlife.com/wiki/Transaction_result");
+                  
+                  
+              }
+                
+                
+                
+            }
+        
+        
+    }
     
   timer()
   {
@@ -283,3 +383,4 @@ default
   }  
     
 }
+
