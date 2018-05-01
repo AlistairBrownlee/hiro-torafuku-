@@ -5,7 +5,7 @@ key Customer_Key;
 key Gift_Key;
 string Customer_Name;
 string Gift_Name;
-string Product = "test Gayngel23";
+string Product = "test Gayngel234";
 string url;
 integer Paid_Amount;
 string Payment_Method;
@@ -15,11 +15,17 @@ string Date;
 string Region;
 string Sale_Start;
 string Sale_End;
-integer Price = 899;
+integer Price = 399;
 integer Reward_All;
 integer Reward_Group;
 integer lchan;
 integer lhandle;
+integer dchan;
+integer dhandle;
+integer gdisc_chan;
+integer adisc_chan;
+integer lgroup_disc;
+integer lall_disc;
 list Investors;
 key requestURL;
 key checkReg;
@@ -71,23 +77,49 @@ Ping()
   
   
   
-  // llHTTPRequest("http://agorasl.com/stores/include/lsl/insertproduct.php",[HTTP_METHOD,"POST",HTTP_MIMETYPE,"application/x-www-form-urlencoded"],
-  //          "Owner="+(string)llGetOwner()+
-   //         "&Product="+(string)Product+
-    //        "&Price="+(string)Price+
-     //       "&Active="+(string)Active+
-      //      "&Region="+(string)Region+
-       //     "&Sale_Start="+(string)Sale_Start+
-        //    "&Sale_End="+(string)Sale_End+
-         //   "&Date="+(string)Date+
-          //  "&Discount_All="+(string)Discount_All+
-           // "&Discount_Group="+(string)Discount_Group+
-           // "&Reward_All="+(string)Reward_All+
-            //"&Reward_Group="+(string)Reward_Group
-            //);
+   llHTTPRequest("http://agorasl.com/stores/include/lsl/insertproduct.php",[HTTP_METHOD,"POST",HTTP_MIMETYPE,"application/x-www-form-urlencoded"],
+           "Owner="+(string)llGetOwner()+
+           "&Product="+(string)Product+
+           "&Price="+(string)Price+
+           "&Active="+(string)Active+
+           "&Region="+(string)Region+
+           "&Sale_Start="+(string)Sale_Start+
+           "&Sale_End="+(string)Sale_End+
+            "&Date="+(string)Date+
+           "&Discount_All="+(string)Discount_All+
+         "&Discount_Group="+(string)Discount_Group+
+            "&Reward_All="+(string)Reward_All+
+            "&Reward_Group="+(string)Reward_Group
+            );
 
     
 
+}
+
+
+setDiscount(integer sdisc,string smsg)
+{
+    
+    if (llGetSubString(smsg, -1, -1) == llUnescapeURL("%0A") )
+            smsg = llStringTrim(llGetSubString(smsg, 0, -2),STRING_TRIM_HEAD);
+    
+     integer idx = llSubStringIndex(smsg,"%");
+     
+     if(~idx)
+     smsg = llGetSubString(smsg, 0, -2);
+     
+     
+     if(sdisc = gdisc_chan)
+     {
+     Discount_Group = (integer)smsg;
+     llInstantMessage(Owner,"Group discount has been set to " +(string)Discount_Group+ "%.");
+     }
+     else if(sdisc = adisc_chan)
+     {
+     Discount_All = (integer)smsg;
+    llInstantMessage(Owner,"The discount for everyone has been set to " +(string)Discount_All+ "%.");
+    }
+    
 }
 
 
@@ -101,6 +133,11 @@ default
       Owner = llGetOwner(); 
       Vendor_Key = llGetKey();
       lchan = ((integer)("0x"+llGetSubString((string)Vendor_Key,-8,-1)) - 723) | 0x8000000; 
+      dchan = ((integer)("0x"+llGetSubString((string)Vendor_Key,-8,-1)) - 3472) | 0x8000000;
+
+      gdisc_chan = ((integer)("0x"+llGetSubString((string)Vendor_Key,-8,-1)) - 47687) | 0x8000000;
+
+      adisc_chan = ((integer)("0x"+llGetSubString((string)Vendor_Key,-8,-1)) - 255) | 0x8000000;
 
         //llRequestPermissions(Owner,PERMISSION_DEBIT);
         init();
@@ -308,6 +345,12 @@ default
         else if (msg == "Discounts")
         {
             
+            llListenRemove(lhandle);
+            llListenRemove(dhandle);
+            dhandle = llListen(dchan,"",id,"");
+            
+            llDialog(id,"\nSelect to set a discount for group and/or everyone.",["Group","Everyone"],dchan);
+            
         }   
         
         else if (msg == "Profit Split")
@@ -316,6 +359,49 @@ default
         }  
         
      }
+     
+     
+     else if(chan == dchan)
+     {
+        
+        if(msg == "Group")
+        {
+            llListenRemove(dhandle);
+            llListenRemove(lgroup_disc); 
+            lgroup_disc = llListen(gdisc_chan,"",id,"");
+            
+         llTextBox(id,"\nSet the discount rate for group members. Type the percentage into the text box.",gdisc_chan);
+         
+            
+        }
+        
+        else if(msg == "Everyone")
+        {
+           llListenRemove(dhandle);
+            llListenRemove(lall_disc);
+             lall_disc = llListen(adisc_chan,"",id,"");
+             llTextBox(id,"\nSet the discount rate for everyone. Type the percentage into the text box.",adisc_chan);
+            
+        }
+         
+      }
+      
+      
+      else if(chan == gdisc_chan)
+      {
+          
+          setDiscount(gdisc_chan,msg);
+      }
+      
+      
+      else if(chan == adisc_chan)
+      {
+      
+        setDiscount(adisc_chan,msg);
+        
+      }
+      
+     
 }
     
     
@@ -383,4 +469,3 @@ default
   }  
     
 }
-
