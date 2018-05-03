@@ -337,8 +337,8 @@ default
         
         else if (msg == "Sales Dates")
         {
-            
-            
+            llListenRemove(lhandle); 
+           llMessageLinked(LINK_SET,0,"SetSale","");
             
         } 
         
@@ -356,7 +356,13 @@ default
         else if (msg == "Profit Split")
         {
             
+            llListenRemove(lhandle);
+            llMessageLinked(LINK_SET,0,"SetProfit","");
+            
         }  
+        
+        
+     
         
      }
      
@@ -469,3 +475,5 @@ default
   }  
     
 }
+
+
