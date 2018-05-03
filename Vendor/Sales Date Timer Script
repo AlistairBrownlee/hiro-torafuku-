@@ -1,1 +1,158 @@
+key Owner;
+integer schan;
+integer shandle;
+integer csale_start;
+integer lsale_start;
+integer csale_end;
+integer lsale_end;
+integer start_time;
+integer end_time;
+integer lstart_handle;
+integer lend_handle;
 
+
+integer DAYS_PER_YEAR        = 365;           // Non leap year
+integer SECONDS_PER_YEAR     = 31536000;      // Non leap year
+integer SECONDS_PER_DAY      = 86400;
+integer SECONDS_PER_HOUR     = 3600;
+integer SECONDS_PER_MINUTE   = 60;
+
+list MonthNameList = [  "JAN", "FEB", "MAR", "APR", "MAY", "JUN", 
+                        "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" ];
+                        
+integer LeapYear( integer year)
+{
+    return !(year & 3);
+}
+ 
+integer DaysPerMonth(integer year, integer month)
+{
+    // Compact Days-Per-Month algorithm. Omei Qunhua.
+    if (month == 2)      return 28 + LeapYear(year);
+    return 30 + ( (month + (month > 7) ) & 1);           // Odd months up to July, and even months after July, have 31 days
+}
+ 
+integer DaysPerYear(integer year)
+{
+    return 365 + LeapYear(year);
+}                        
+
+
+integer DateTime2Unix(integer year, integer month, integer day, integer hour, integer minute, integer second)
+{
+    integer time = 0;
+    integer yr = 1970;
+    integer mt = 1;
+    integer days;
+ 
+    while(yr < year)
+    {
+        days = DaysPerYear(yr++);
+        time += days * SECONDS_PER_DAY;
+    }
+ 
+    while (mt < month)
+    {
+        days = DaysPerMonth(year, mt++);
+        time += days * SECONDS_PER_DAY;
+    }
+ 
+    days = day - 1;
+    time += days * SECONDS_PER_DAY;
+    time += hour * SECONDS_PER_HOUR;
+    time += minute * SECONDS_PER_MINUTE;
+    time += second;
+ 
+    return time;
+}
+
+default
+{
+    on_rez(integer start_param)
+    {
+     
+     llResetScript();
+        
+    }
+    
+    state_entry()
+    {
+      
+      Owner = llGetOwner();
+      schan = ((integer)("0x"+llGetSubString((string)llGetKey(),-8,-1)) - 7253) | 0x8000000;  
+        csale_start = ((integer)("0x"+llGetSubString((string)llGetKey(),-8,-1)) - 78278) | 0x8000000;  
+        csale_end = ((integer)("0x"+llGetSubString((string)llGetKey(),-8,-1)) - 363) | 0x8000000; 
+        start_time = ((integer)("0x"+llGetSubString((string)llGetKey(),-8,-1)) - 78463) | 0x8000000;
+        end_time = ((integer)("0x"+llGetSubString((string)llGetKey(),-8,-1)) -38463) | 0x8000000;  
+
+    }
+    
+    link_message(integer sender, integer num, string msg, key id)
+    {
+        
+      if(msg == "SetSale")
+      {
+          llListenRemove(shandle);
+          shandle = llListen(schan,"",Owner,"");
+           llDialog(Owner,"\nSelect to set a discount for group and/or everyone.",["Sale Start","Sale End"],schan);
+          
+        } 
+        
+        
+        else if(msg == "GetSale")
+        {
+            
+            
+        } 
+        
+        
+    }
+
+    listen(integer chan, string name, key id, string msg)
+    {
+        if(chan == schan)
+        {
+        if(msg == "Sale Start")
+        {
+            
+           
+            llListenRemove(lsale_start);
+            lsale_start = llListen(csale_start,"",id,"");
+            llTextBox(id,"\nPlease set the date that the sale will start. The format should be mm\\dd\\yyyy",csale_start);
+            
+            
+        }
+        
+         else if(msg == "Sale End")
+        {
+            
+           
+            llListenRemove(lsale_end);
+            lsale_end = llListen(csale_end,"",id,"");
+            llTextBox(id,"\nPlease set the date that the sale will start. The format should be mm\\dd\\yyyy",csale_end);
+            
+            
+        }
+        }
+        
+        else if(chan == csale_start)
+        {
+            
+          list stmp = llParseString2List(msg,["//"],[""]);   
+          
+          
+            
+            
+        }
+        
+        
+        
+    
+    }
+    
+    timer()
+    {
+        
+        
+     }
+}
