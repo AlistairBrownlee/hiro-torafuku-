@@ -1,1 +1,133 @@
+key Owner;
+integer partner_chan;
+integer lpartner;
+integer profit_chan;
+integer lprofit;
+list Partners;
+integer stakeTotal = 100;
+key queryName;
+key avi;
+integer stake;
+
+default
+{
+    
+     on_rez(integer start_param)
+    {
+     
+     llResetScript();
+        
+    }
+    
+    
+    state_entry()
+    {
+       Owner = llGetOwner();
+      profit_chan = ((integer)("0x"+llGetSubString((string)llGetKey(),-8,-1)) - 77548) | 0x8000000;  
+    }
+    
+     link_message(integer sender, integer num, string msg, key id)
+    {
+         if(msg == "SetProfit")
+      {
+          llListenRemove(lpartner);
+          lpartner = llListen(partner_chan,"",Owner,"");
+           llDialog(Owner,"\nSelect to add a partner to split profits with or delete a partner.",["Add Partner","Delete Partner"],partner_chan);
+          
+        } 
+        
+        }
+
+   
+    listen(integer chan, string name, key id, string msg)
+    {
+        
+        if(chan == partner_chan)
+        {
+          
+          if(msg == "Add Partner")
+            {
+                llListenRemove(lpartner);
+                llListenRemove(lprofit);
+            lprofit = llListen(profit_chan,"",id,"");
+              llTextBox(id,"\nPlease type the UUID of the partner you wish to add and the percentage you want to give them seperated by commas.\n\ne.g:71fb184f-f9f5-41c6-822c-ca4e2252a029,15",profit_chan);  
+                
+                
+             }
+            
+            else if(msg == "Delete Partner")
+            {
+              
+                
+                
+            }
+        }
+        
+       else if(chan == profit_chan)
+        {
+            if(llGetListLength(Partners) < 5)
+              {  
+            list tmp = llParseString2List(msg,[","],[]);
+            avi = (key)llList2String(tmp,0);
+            stake = (integer)llList2String(tmp,1);
+            stakeTotal = stakeTotal - stake;
+            
+            if(stakeTotal > 0)
+            {
+           
+            if(avi)
+            {
+                llSetTimerEvent(0.0);
+                llSetTimerEvent(2.0);
+                queryName = llRequestAgentData(avi,DATA_NAME);
+                
+            }
+            
+            else // if avi is not a key
+            {
+                
+                
+            }
+            }
+            
+            else
+            {
+                
+                
+            } // if stakeTotal < 0
+            
+            
+            
+            }
+            
+            else // if patner limit is reached
+            {
+                llInstantMessage(Owner, "The profit sharing stakes for this vendor can not total more than 100% of the profit. Please set the stake of this partner so that percentages paid to all partners does not exceed 100%.");
+                
+                }
+                    
+            
+        }
+        }
+   
+   dataserver(key queryID, string data)
+   {
+       
+       if(queryID == queryName)
+       {
+            llSetTimerEvent(0.0);
+           Partners += [data] + [avi] + [stake];
+           
+        }
+       
+    }
+    
+    timer()
+    {
+    
+    
+    
+    }
+   
+}
 
